@@ -14,7 +14,7 @@
 <h1 id="title" tabindex="-1">Er wacht iets leuks.</h1>
 <div id="locked">
 <p>Een kleine verrassing, veilig ingepakt. Open hem met de code op je kaartje.</p>
-<form id="form"><label for="code">Jouw toegangscode</label><input id="code" type="password" required maxlength="256" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="status"><button id="open">Pak je cadeau uit</button></form>
+<form id="form"><label for="code">Jouw toegangscode</label><input id="code" type="text" required maxlength="256" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="status"><label style="font-size:14px;margin:12px 0"><input id="hide-code" type="checkbox" style="width:auto"> Code verbergen</label><button id="open">Pak je cadeau uit</button></form>
 </div>
 <p id="status" role="status"></p>
 <section id="unlocked" hidden aria-label="Jouw cadeau">
@@ -31,6 +31,7 @@ const $=id=>document.getElementById(id);
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const id=new URLSearchParams(location.search).get('gift');
 let parcel;
+$('hide-code').addEventListener('change',()=>{$('code').type=$('hide-code').checked?'password':'text';});
 async function derive(password,salt){
  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['decrypt']);
