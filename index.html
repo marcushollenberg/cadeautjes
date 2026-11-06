@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Een cadeautje voor jou</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #f9f3ea;
+      color: #302442;
+      font-family: system-ui, sans-serif;
+    }
+    main {
+      width: min(100%, 440px);
+      padding: 36px 28px;
+      border-radius: 24px;
+      background: white;
+      box-shadow: 0 16px 60px #30244215;
+      text-align: center;
+    }
+    .gift { font-size: 64px; }
+    h1 { font-size: 28px; }
+    p { line-height: 1.6; }
+    label { display: block; text-align: left; margin: 24px 0 8px; }
+    input, button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font: inherit;
+    }
+    input { border: 1px solid #aca3b5; }
+    button {
+      margin-top: 12px;
+      border: 0;
+      background: #64429a;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    :focus-visible { outline: 3px solid #b88220; outline-offset: 4px; }
+    #status { min-height: 26px; }
+    #message { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .opened { animation: celebrate .7s ease; }
+    @keyframes celebrate {
+      30% { transform: rotate(-12deg) scale(1.2); }
+      65% { transform: rotate(12deg) scale(1.2); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .opened { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="gift" id="gift" aria-hidden="true">🎁</div>
+    <h1>Een cadeautje voor jou</h1>
+    <p id="intro">Er wacht een verrassing. Vul je toegangscode in.</p>
+
+    <form id="unlock">
+      <label for="code">Toegangscode</label>
+      <input id="code" type="password" required maxlength="256"
+        autocomplete="off" autocapitalize="none" spellcheck="false"
+        aria-describedby="status">
+      <button id="open" type="submit">Open mijn cadeau</button>
+    </form>
+
+    <p id="status" role="status"></p>
+    <section id="result" hidden aria-labelledby="result-title">
+      <h2 id="result-title" tabindex="-1">Verrassing!</h2>
+      <p id="message"></p>
+      <button id="close" type="button">Sluit het cadeau</button>
+    </section>
+    <noscript>Schakel JavaScript in om dit cadeau te openen.</noscript>
+  </main>
+
+  <script>
+    "use strict";
+
+    // Alleen versleutelde proefinhoud; geen wachtwoord of sleutel.
+    const parcel = {
+      salt: "lfMlVHn9vCqc/o3nd5UpBA==",
+      iv: "Wxef+5lW13gRwGmN",
+      data: "QytVoQ8ETHe5ewW+EFWSutR1uYsndc+4yC84n4chgXOB+nxiu0f9yVKeqkcb9Kym+HxhZG0Qkn3bqu4="
+    };
+
+    const byId = id => document.getElementById(id);
+    const bytes = value =>
+      Uint8Array.from(atob(value), character => character.charCodeAt(0));
+
+    byId("unlock").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (byId("open").disabled) return;
+
+      if (!window.crypto?.subtle) {
+        byId("status").textContent =
+          "Open deze pagina via HTTPS in een recente browser.";
+        return;
+      }
+
+      byId("open").disabled = true;
+      byId("status").textContent = "Je cadeau wordt geopend…";
+      const password = byId("code").value;
+      byId("code").value = "";
+
+      try {
+        const material = await crypto.subtle.importKey(
+          "raw", new TextEncoder().encode(password),
+          "PBKDF2", false, ["deriveKey"]
+        );
+        const key = await crypto.subtle.deriveKey(
+          {
+            name: "PBKDF2",
+            salt: bytes(parcel.salt),
+            iterations: 600000,
+            hash: "SHA-256"
+          },
+          material,
+          { name: "AES-GCM", length: 256 },
+          false,
+          ["decrypt"]
+        );
+        const plaintext = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: bytes(parcel.iv) },
+          key,
+          bytes(parcel.data)
+        );
+
+        byId("message").textContent = new TextDecoder().decode(plaintext);
+        byId("unlock").hidden = true;
+        byId("intro").hidden = true;
+        byId("result").hidden = false;
+        byId("status").textContent = "";
+        byId("gift").textContent = "🎉";
+        byId("gift").classList.add("opened");
+        byId("result-title").focus();
+      } catch {
+        byId("status").textContent =
+          "Openen lukt niet. Controleer je toegangscode en probeer opnieuw.";
+        byId("code").focus();
+      } finally {
+        byId("open").disabled = false;
+      }
+    });
+
+    byId("close").addEventListener("click", () => {
+      byId("message").textContent = "";
+      byId("result").hidden = true;
+      byId("unlock").hidden = false;
+      byId("intro").hidden = false;
+      byId("gift").textContent = "🎁";
+      byId("gift").classList.remove("opened");
+      byId("code").focus();
+    });
+  </script>
+</body>
+</html>
