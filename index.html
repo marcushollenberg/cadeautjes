@@ -1,163 +1,84 @@
 <!doctype html>
 <html lang="nl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <title>Een cadeautje voor jou</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      background: #f9f3ea;
-      color: #302442;
-      font-family: system-ui, sans-serif;
-    }
-    main {
-      width: min(100%, 440px);
-      padding: 36px 28px;
-      border-radius: 24px;
-      background: white;
-      box-shadow: 0 16px 60px #30244215;
-      text-align: center;
-    }
-    .gift { font-size: 64px; }
-    h1 { font-size: 28px; }
-    p { line-height: 1.6; }
-    label { display: block; text-align: left; margin: 24px 0 8px; }
-    input, button {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font: inherit;
-    }
-    input { border: 1px solid #aca3b5; }
-    button {
-      margin-top: 12px;
-      border: 0;
-      background: #64429a;
-      color: white;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: wait; }
-    :focus-visible { outline: 3px solid #b88220; outline-offset: 4px; }
-    #status { min-height: 26px; }
-    #message { white-space: pre-wrap; overflow-wrap: anywhere; }
-    .opened { animation: celebrate .7s ease; }
-    @keyframes celebrate {
-      30% { transform: rotate(-12deg) scale(1.2); }
-      65% { transform: rotate(12deg) scale(1.2); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .opened { animation: none; }
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <div class="gift" id="gift" aria-hidden="true">🎁</div>
-    <h1>Een cadeautje voor jou</h1>
-    <p id="intro">Er wacht een verrassing. Vul je toegangscode in.</p>
-
-    <form id="unlock">
-      <label for="code">Toegangscode</label>
-      <input id="code" type="password" required maxlength="256"
-        autocomplete="off" autocapitalize="none" spellcheck="false"
-        aria-describedby="status">
-      <button id="open" type="submit">Open mijn cadeau</button>
-    </form>
-
-    <p id="status" role="status"></p>
-    <section id="result" hidden aria-labelledby="result-title">
-      <h2 id="result-title" tabindex="-1">Verrassing!</h2>
-      <p id="message"></p>
-      <button id="close" type="button">Sluit het cadeau</button>
-    </section>
-    <noscript>Schakel JavaScript in om dit cadeau te openen.</noscript>
-  </main>
-
-  <script>
-    "use strict";
-
-    // Alleen versleutelde proefinhoud; geen wachtwoord of sleutel.
-    const parcel = {
-      salt: "lfMlVHn9vCqc/o3nd5UpBA==",
-      iv: "Wxef+5lW13gRwGmN",
-      data: "QytVoQ8ETHe5ewW+EFWSutR1uYsndc+4yC84n4chgXOB+nxiu0f9yVKeqkcb9Kym+HxhZG0Qkn3bqu4="
-    };
-
-    const byId = id => document.getElementById(id);
-    const bytes = value =>
-      Uint8Array.from(atob(value), character => character.charCodeAt(0));
-
-    byId("unlock").addEventListener("submit", async event => {
-      event.preventDefault();
-      if (byId("open").disabled) return;
-
-      if (!window.crypto?.subtle) {
-        byId("status").textContent =
-          "Open deze pagina via HTTPS in een recente browser.";
-        return;
-      }
-
-      byId("open").disabled = true;
-      byId("status").textContent = "Je cadeau wordt geopend…";
-      const password = byId("code").value;
-      byId("code").value = "";
-
-      try {
-        const material = await crypto.subtle.importKey(
-          "raw", new TextEncoder().encode(password),
-          "PBKDF2", false, ["deriveKey"]
-        );
-        const key = await crypto.subtle.deriveKey(
-          {
-            name: "PBKDF2",
-            salt: bytes(parcel.salt),
-            iterations: 600000,
-            hash: "SHA-256"
-          },
-          material,
-          { name: "AES-GCM", length: 256 },
-          false,
-          ["decrypt"]
-        );
-        const plaintext = await crypto.subtle.decrypt(
-          { name: "AES-GCM", iv: bytes(parcel.iv) },
-          key,
-          bytes(parcel.data)
-        );
-
-        byId("message").textContent = new TextDecoder().decode(plaintext);
-        byId("unlock").hidden = true;
-        byId("intro").hidden = true;
-        byId("result").hidden = false;
-        byId("status").textContent = "";
-        byId("gift").textContent = "🎉";
-        byId("gift").classList.add("opened");
-        byId("result-title").focus();
-      } catch {
-        byId("status").textContent =
-          "Openen lukt niet. Controleer je toegangscode en probeer opnieuw.";
-        byId("code").focus();
-      } finally {
-        byId("open").disabled = false;
-      }
-    });
-
-    byId("close").addEventListener("click", () => {
-      byId("message").textContent = "";
-      byId("result").hidden = true;
-      byId("unlock").hidden = false;
-      byId("intro").hidden = false;
-      byId("gift").textContent = "🎁";
-      byId("gift").classList.remove("opened");
-      byId("code").focus();
-    });
-  </script>
-</body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Een cadeau voor jou</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100svh;background:#f7f1e8;color:#29253b;font-family:system-ui,sans-serif;display:grid;place-items:center;padding:24px}main{width:min(100%,580px);background:#fffdf9;padding:clamp(24px,6vw,52px);border-radius:28px;box-shadow:0 20px 70px #24203912}small{letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#6a587c}h1{font-size:clamp(32px,7vw,48px);line-height:1.08;letter-spacing:-.04em}p{line-height:1.7}.icon{font-size:64px;margin:24px 0}label{display:block;margin:24px 0 8px}input,button,.action{font:inherit;padding:15px;border-radius:12px;width:100%}input{border:1px solid #aaa2b1}button,.action{display:block;border:0;background:#6841a5;color:white;text-align:center;font-weight:700;cursor:pointer;text-decoration:none;margin-top:14px}button:disabled{opacity:.6;cursor:wait}:focus-visible{outline:3px solid #bc7200;outline-offset:4px}[hidden]{display:none!important}#status{min-height:28px}#message{white-space:pre-wrap;overflow-wrap:anywhere}.amount{font-size:72px;font-weight:800;letter-spacing:-.06em;margin:20px 0}.note{font-size:14px;color:#625b6a}.secondary{background:#ebe6f0;color:#342747}.party{background:#17253e;color:#f9f5e9}.party main{background:#22324e}.party small{color:#acede1}.party button,.party .action{background:#bbf5cb;color:#152c2e}.party .secondary{background:#3c4d69;color:white}.party .note{color:#d3dbe6}.pizza{background:#f0dfc4;color:#382316}.pizza main{border-top:10px solid #a43c29;background:#fff8ea}.pizza small{color:#a43c29}.pizza button,.pizza .action{background:#a43c29;color:white}.pop{animation:pop .8s ease}@keyframes pop{35%{transform:rotate(-12deg) scale(1.2)}70%{transform:rotate(10deg) scale(1.1)}}@media(prefers-reduced-motion:reduce){.pop{animation:none}}
+</style>
+<main>
+<small id="eyebrow">Speciaal voor jou</small>
+<div class="icon" id="icon" aria-hidden="true">🎁</div>
+<h1 id="title" tabindex="-1">Er wacht iets leuks.</h1>
+<div id="locked">
+<p>Een kleine verrassing, veilig ingepakt. Open hem met de code op je kaartje.</p>
+<form id="form"><label for="code">Jouw toegangscode</label><input id="code" type="password" required maxlength="256" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="status"><button id="open">Pak je cadeau uit</button></form>
+</div>
+<p id="status" role="status"></p>
+<section id="unlocked" hidden aria-label="Jouw cadeau">
+<div class="amount" id="amount"></div><p id="message"></p>
+<a id="whatsapp" class="action" target="_blank" rel="noopener noreferrer" hidden>Stuur een bericht via WhatsApp ↗</a>
+<p class="note" id="instructions" hidden>Maak zelf een Tikkie of betaalverzoek in je bankapp en deel dat in deze WhatsApp-chat. De knop opent alleen een conceptbericht; jij kiest of je het verstuurt.</p>
+<button id="close" class="secondary">Cadeau weer inpakken</button>
+</section>
+<noscript>Schakel JavaScript in om je cadeau te openen.</noscript>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const id=new URLSearchParams(location.search).get('gift');
+let parcel;
+async function derive(password,salt){
+ const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+ return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['decrypt']);
+}
+async function load(){
+ if(!crypto.subtle)throw Error('Open deze pagina via HTTPS in een recente browser.');
+ if(!/^[a-f0-9]{32}$/.test(id||''))throw Error('Gebruik de volledige cadeaulink die je hebt gekregen.');
+ const response=await fetch('./gift-'+id+'.json',{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});
+ if(!response.ok)throw Error('Dit cadeau is nog niet beschikbaar. Controleer de link of probeer het later opnieuw.');
+ const text=await response.text();
+ if(text.length>20000)throw Error('Het cadeaubestand is ongeldig.');
+ const p=JSON.parse(text);
+ if(p.version!==1||typeof p.salt!=='string'||typeof p.iv!=='string'||typeof p.data!=='string'||bytes(p.salt).length!==16||bytes(p.iv).length!==12)throw Error('Het cadeaubestand is ongeldig.');
+ return p;
+}
+$('open').disabled=true;
+load().then(p=>{parcel=p;$('open').disabled=false;}).catch(e=>{$('status').textContent=e.message;});
+$('form').addEventListener('submit',async event=>{
+ event.preventDefault();if(!parcel||$('open').disabled)return;
+ $('open').disabled=true;$('status').textContent='Even uitpakken…';
+ const password=$('code').value;$('code').value='';
+ try{
+  const key=await derive(password,bytes(parcel.salt));
+  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(parcel.iv)},key,bytes(parcel.data));
+  const gift=JSON.parse(new TextDecoder().decode(plain));
+  if(typeof gift.name!=='string'||typeof gift.message!=='string'||!Number.isFinite(gift.amount)||gift.amount<=0)throw Error('Invalid gift');
+  document.body.className=gift.theme==='pizza'?'pizza':'party';
+  $('eyebrow').textContent=gift.theme==='pizza'?'Voor de pizzabakker':'Een dosis feest';
+  $('icon').textContent=gift.theme==='pizza'?'🍕':'🎉';$('icon').classList.add('pop');
+  $('title').textContent=gift.theme==='pizza'?'Jouw pizzeria begint hier, '+gift.name+'.':'Deze is voor jou, '+gift.name+'.';
+  $('amount').textContent=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(gift.amount);
+  $('message').textContent=gift.message;
+  if(typeof gift.phone==='string'&&/^[1-9][0-9]{7,14}$/.test(gift.phone)){
+   const text='Bedankt voor mijn cadeau van '+$('amount').textContent+'! Ik stuur je zo een Tikkie 😊';
+   $('whatsapp').href='https://wa.me/'+gift.phone+'?text='+encodeURIComponent(text);
+   $('whatsapp').hidden=false;$('instructions').hidden=false;
+  }
+  $('locked').hidden=true;$('unlocked').hidden=false;$('status').textContent='';$('title').focus();
+ }catch{$('status').textContent='Openen lukt niet. Controleer de code of vraag de gever om hulp.';$('code').focus();}
+ finally{$('open').disabled=false;}
+});
+function reset(){
+ document.body.className='';$('icon').textContent='🎁';$('icon').classList.remove('pop');
+ $('eyebrow').textContent='Speciaal voor jou';$('title').textContent='Er wacht iets leuks.';
+ $('message').textContent='';$('amount').textContent='';$('whatsapp').removeAttribute('href');
+ $('whatsapp').hidden=true;$('instructions').hidden=true;$('unlocked').hidden=true;$('locked').hidden=false;$('code').value='';$('status').textContent='';
+}
+$('close').addEventListener('click',()=>{reset();$('code').focus();});
+window.addEventListener('pagehide',reset);
+</script>
 </html>
