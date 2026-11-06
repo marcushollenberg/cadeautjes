@@ -64,7 +64,7 @@ $('form').addEventListener('submit',async event=>{
   $('amount').textContent=new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(gift.amount);
   $('message').textContent=gift.message;
   if(typeof gift.phone==='string'&&/^[1-9][0-9]{7,14}$/.test(gift.phone)){
-   const text='Bedankt voor mijn cadeau van '+$('amount').textContent+'! Ik stuur je zo een Tikkie 😊';
+   const text='Hee, ik ben jarig. Geef me '+$('amount').textContent+', pannenkoek!';
    $('whatsapp').href='https://wa.me/'+gift.phone+'?text='+encodeURIComponent(text);
    $('whatsapp').hidden=false;$('instructions').hidden=false;
   }
